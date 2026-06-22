@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
 import { getInsforgeServerClient } from "@/lib/insforge";
+import { broadcastAlert } from "@/lib/telegram";
 
 // Helper to determine risk score
 function calculateRiskScore(mintAddress: string, symbol: string): number {
@@ -163,6 +164,12 @@ export async function POST(req: NextRequest) {
       }
 
       console.log(`[webhooks/alchemy] Successfully inserted ${alertsToInsert.length} alerts.`);
+      // Broadcast alerts asynchronously to premium users
+      for (const alert of alertsToInsert) {
+        broadcastAlert(alert).catch((err) => {
+          console.error("[webhooks/alchemy] Alert broadcast error:", err);
+        });
+      }
     }
 
     return NextResponse.json({ success: true, message: `Processed ${alertsToInsert.length} alerts` });

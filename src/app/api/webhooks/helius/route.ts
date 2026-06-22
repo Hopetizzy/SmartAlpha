@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getInsforgeServerClient } from "@/lib/insforge";
+import { broadcastAlert } from "@/lib/telegram";
 
 // Helper to determine risk score
 function calculateRiskScore(mintAddress: string, symbol: string): number {
@@ -156,6 +157,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Database insert error", details: error }, { status: 500 });
       } else {
         console.log(`[webhooks/helius] Successfully inserted ${alertsToInsert.length} alerts.`);
+        // Broadcast alerts asynchronously to premium users
+        for (const alert of alertsToInsert) {
+          broadcastAlert(alert).catch((err) => {
+            console.error("[webhooks/helius] Alert broadcast error:", err);
+          });
+        }
       }
     }
 

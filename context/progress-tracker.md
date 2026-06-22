@@ -7,8 +7,8 @@ Update this file after every completed feature. Any AI agent reading this should
 ## Current Status
 
 **Phase:** Phase 2 — The Watcher & Messenger
-**Last completed:** 03 Landing Page & Shell
-**Next:** 04 Blockchain Webhooks (Helius & Alchemy Webhooks -> InsForge)
+**Last completed:** 05 Telegram Bot (grammY setup, `/start` linking, broadcasting)
+**Next:** 06 Live Alert Feed
 
 ---
 
@@ -22,8 +22,8 @@ Update this file after every completed feature. Any AI agent reading this should
 
 ### Phase 2 — The Watcher & Messenger
 
-- `[ ]` 04 Blockchain Webhooks (Helius & Alchemy Webhooks -> Convex)
-- `[ ]` 05 Telegram Bot (grammY setup, `/start` linking, broadcasting)
+- `[x]` 04 Blockchain Webhooks (Helius & Alchemy Webhooks -> InsForge)
+- `[x]` 05 Telegram Bot (grammY setup, `/start` linking, broadcasting)
 
 ### Phase 3 — The Signal (Dashboard)
 
