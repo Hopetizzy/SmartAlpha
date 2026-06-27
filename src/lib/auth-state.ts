@@ -72,3 +72,57 @@ export async function getCurrentViewer(): Promise<AuthViewer> {
   const user = await getCurrentUserDetails();
   return mapUserToViewer(user);
 }
+
+export async function syncUserPremiumStatus(userId: string): Promise<{ isPremium: boolean; stripeCustomerId: string | null }> {
+  try {
+    const insforge = createInsforgeServerClient();
+
+    // 1. Query customer mapping to get Stripe customer ID
+    const { data: mapping, error: mapError } = await insforge.database
+      .from("customer_mappings_view")
+      .select("provider_customer_id")
+      .eq("subject_type", "users")
+      .eq("subject_id", userId)
+      .maybeSingle();
+
+    if (mapError) {
+      console.error("[auth-state/sync] Error fetching customer mapping:", mapError);
+    }
+
+    const stripeCustomerId = mapping?.provider_customer_id || null;
+
+    // 2. Query subscriptions to see if there is any active/trialing
+    const { data: subs, error: subError } = await insforge.database
+      .from("stripe_subscriptions_view")
+      .select("status")
+      .eq("subject_type", "users")
+      .eq("subject_id", userId);
+
+    if (subError) {
+      console.error("[auth-state/sync] Error fetching subscriptions:", subError);
+    }
+
+    const isPremium = subs?.some(
+      (sub: any) => sub.status === "active" || sub.status === "trialing"
+    ) ?? false;
+
+    // 3. Update the users table
+    const { error: updateError } = await insforge.database
+      .from("users")
+      .update({
+        is_premium: isPremium,
+        stripe_customer_id: stripeCustomerId,
+      })
+      .eq("id", userId);
+
+    if (updateError) {
+      console.error("[auth-state/sync] Error updating users table:", updateError);
+    }
+
+    return { isPremium, stripeCustomerId };
+  } catch (err) {
+    console.error("[auth-state/sync] Exception during sync:", err);
+    return { isPremium: false, stripeCustomerId: null };
+  }
+}
+

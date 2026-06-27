@@ -12,7 +12,7 @@ export const bot = new Bot(token || "");
 bot.api.config.use(async (prev, method, payload, signal) => {
   console.log(`[telegram] Outbound API call: ${method}`, JSON.stringify(payload));
   
-  const isMock = process.env.NODE_ENV === "development" || process.env.MOCK_TELEGRAM === "true";
+  const isMock = !token || process.env.MOCK_TELEGRAM === "true";
   if (isMock) {
     console.log(`[telegram-mock] Mocking response for ${method}`);
     if (method === "getMe") {
@@ -67,7 +67,7 @@ bot.command("start", async (ctx) => {
     console.log("[telegram] /start command invoked. connectToken =", connectToken, "chatId =", ctx.chat.id);
     if (!connectToken) {
       return ctx.reply(
-        "👋 Welcome to SmartAlpha!\n\nTo start receiving live alerts directly in your Telegram, please visit the dashboard settings page on our website and click 'Connect Telegram' to generate your unique linkage link."
+        "Welcome to SmartAlpha!\n\nTo start receiving live alerts directly in your Telegram, please visit the dashboard settings page on our website and click 'Connect Telegram' to generate your unique linkage link."
       );
     }
 
@@ -86,7 +86,7 @@ bot.command("start", async (ctx) => {
     if (fetchError || !user) {
       console.error("[telegram] Connect token lookup failure:", fetchError);
       return ctx.reply(
-        "❌ Invalid or expired connection token. Please request a new link from your dashboard settings page."
+        "[Error] Invalid or expired connection token. Please request a new link from your dashboard settings page."
       );
     }
 
@@ -104,12 +104,12 @@ bot.command("start", async (ctx) => {
 
     if (updateError) {
       console.error("[telegram] Link update failure:", updateError);
-      return ctx.reply("❌ An error occurred while linking your account. Please try again later.");
+      return ctx.reply("[Error] An error occurred while linking your account. Please try again later.");
     }
 
     console.log("[telegram] Successfully linked account, replying to user...");
     return ctx.reply(
-      `✅ Success! Your Telegram account has been linked to SmartAlpha (${user.email}).\n\nYou will now receive live alerts according to your premium status and filter parameters settings.`
+      `[Success] Your Telegram account has been linked to SmartAlpha (${user.email}).\n\nYou will now receive live alerts according to your premium status and filter parameters settings.`
     );
   } catch (err) {
     console.error("[telegram] error handling /start:", err);
@@ -129,13 +129,13 @@ bot.command("status", async (ctx) => {
 
     if (error || !user) {
       return ctx.reply(
-        "ℹ️ This Telegram chat is not connected to a SmartAlpha profile. Log in to the dashboard to sync."
+        "[Info] This Telegram chat is not connected to a SmartAlpha profile. Log in to the dashboard to sync."
       );
     }
 
     return ctx.reply(
-      `📊 <b>SmartAlpha Status</b>\n\n<b>Connected Account:</b> ${user.email}\n<b>Status:</b> ${
-        user.is_premium ? "⭐ Premium Plan (Unrestricted)" : "Free Tier"
+      `<b>SmartAlpha Status</b>\n\n<b>Connected Account:</b> ${user.email}\n<b>Status:</b> ${
+        user.is_premium ? "Premium Plan (Unrestricted)" : "Free Tier"
       }`,
       { parse_mode: "HTML" }
     );
@@ -147,7 +147,7 @@ bot.command("status", async (ctx) => {
 // 3. /help command
 bot.command("help", (ctx) => {
   return ctx.reply(
-    "🤖 <b>SmartAlpha Bot Help</b>\n\n" +
+    "<b>SmartAlpha Bot Help</b>\n\n" +
       "Commands:\n" +
       "• /start &lt;token&gt; - Onboard and sync your Telegram account\n" +
       "• /status - View account details and active subscription status\n" +
@@ -178,11 +178,11 @@ bot.command("admin", async (ctx) => {
       .eq("is_premium", true);
 
     if (err1 || err2) {
-      return ctx.reply("❌ Error fetching metrics from the database.");
+      return ctx.reply("[Error] Error fetching metrics from the database.");
     }
 
     return ctx.reply(
-      `📈 <b>System Dashboard Stats</b>\n\n` +
+      `<b>System Dashboard Stats</b>\n\n` +
         `• <b>Total Registers:</b> ${totalUsers}\n` +
         `• <b>Premium Subscriptions:</b> ${premiumUsers}`,
       { parse_mode: "HTML" }
@@ -191,6 +191,23 @@ bot.command("admin", async (ctx) => {
     console.error("[telegram] error handling /admin:", err);
   }
 });
+
+// Deterministic mock liquidity calculator based on token mint and symbol
+export function calculateMockLiquidity(mintAddress: string, symbol: string): number {
+  const upperSymbol = symbol.toUpperCase();
+  if (upperSymbol === "SOL" || upperSymbol === "WSOL") return 15000000;
+  if (upperSymbol === "USDC" || upperSymbol === "USDT") return 50000000;
+  if (upperSymbol === "WIF") return 8500000;
+  if (upperSymbol === "POPCAT") return 4200000;
+  if (upperSymbol === "BONK") return 12000000;
+  
+  // Hash-based deterministic liquidity for other tokens (e.g., $5,000 - $150,000)
+  let hash = 0;
+  for (let i = 0; i < mintAddress.length; i++) {
+    hash = mintAddress.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return 5000 + (Math.abs(hash) % 145000);
+}
 
 // 5. Broadcast helper called by webhook routes
 export async function broadcastAlert(alert: {
@@ -228,7 +245,6 @@ export async function broadcastAlert(alert: {
     const walletAddressShort =
       alert.wallet_address.slice(0, 4) + "..." + alert.wallet_address.slice(-4);
     const mintShort = alert.token_mint.slice(0, 4) + "..." + alert.token_mint.slice(-4);
-    const riskEmoji = alert.risk_score <= 30 ? "🟢" : alert.risk_score <= 70 ? "🟡" : "🔴";
     const amountVal = Number(alert.amount_usd) || 0;
 
     for (const user of premiumUsers) {
@@ -253,17 +269,21 @@ export async function broadcastAlert(alert: {
           if (alert.risk_score > settings.max_risk_score) {
             continue; // Filtered out by risk score
           }
+          const mockLiquidity = calculateMockLiquidity(alert.token_mint, alert.token_symbol);
+          if (mockLiquidity < Number(settings.min_liquidity)) {
+            continue; // Filtered out by token liquidity
+          }
         }
 
         // Format premium alert message
         const message =
-          `🚨 <b>SMART MONEY ALERT</b> 🚨\n\n` +
+          `<b>[Alert] Smart Money Alert</b>\n\n` +
           `<b>Wallet:</b> <code>${walletLabel}</code> (<code>${walletAddressShort}</code>)\n` +
-          `<b>Action:</b> ${alert.type === "BUY" ? "🟢 BUY" : "🔴 SELL"}\n` +
+          `<b>Action:</b> ${alert.type === "BUY" ? "BUY" : "SELL"}\n` +
           `<b>Asset:</b> <b>${alert.token_symbol}</b> (<code>${mintShort}</code>)\n\n` +
           `<b>Amount:</b> $${amountVal.toLocaleString()}\n` +
-          `<b>Risk Score:</b> ${alert.risk_score}/100 ${riskEmoji}\n\n` +
-          `📊 <a href="https://dexscreener.com/solana/${alert.token_mint}">View on DexScreener</a> | ⚡ <a href="https://jup.ag/swap/SOL-${alert.token_mint}">Trade on Jupiter</a>`;
+          `<b>Risk Score:</b> ${alert.risk_score}/100\n\n` +
+          `<a href="https://dexscreener.com/solana/${alert.token_mint}">View on DexScreener</a> | <a href="https://jup.ag/swap/SOL-${alert.token_mint}">Trade on Jupiter</a>`;
 
         await bot.api.sendMessage(user.telegram_chat_id, message, {
           parse_mode: "HTML",

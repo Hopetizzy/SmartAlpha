@@ -1,50 +1,38 @@
-# Memory — Phase 3: The Signal (Dashboard)
+# Memory — Stripe Monetization, Responsive Vertical Sidebar & Settings Refactoring
 
-Last updated: 2026-06-23T08:31:00-07:00
+Last updated: 2026-06-27T06:01:00+01:00
 
 ## What was built
 
-### Phase 1 — Foundation (Completed)
-- Next.js workspace initialized. Applied initial schema migrations (`users`, `alert_settings`, `target_wallets`, `watchlists`, `alerts`). Row Level Security enabled.
-- Webhook sync receiver `/api/webhooks/insforge` created.
-- Scaffolding layout shells, responsive navbar/footer, and sign-up/onboarding forms implemented.
-
-### Phase 2 — The Watcher & Messenger (Completed)
-- Ingestion endpoints `/api/webhooks/helius` and `/api/webhooks/alchemy` created, featuring deterministic risk scoring and HMAC verification.
-- Telegram Bot connection and dynamic callback instancing (`telegram.ts` and `/api/webhooks/telegram`). Added command handling (`/start <token>`, `/status`).
-- Added migrations for anonymous bot updates and select permissions.
-
-### Phase 3 — The Signal (Completed)
-- **Refactored Dashboard Grid Layout**: Overhauled [page.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/dashboard/page.tsx) matching reference designs:
-  - Divided page into a left-column sidebar navigation and a right-column metrics panel.
-  - Designed circular SVG Signal Distribution donut and Wallet Win-Rate progress bars in Row 1.
-- **Client Sidebar Component**: Created [dashboard-sidebar.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/components/dashboard-sidebar.tsx) containing:
-  - User greeting with current date.
-  - Sub-menu links for Dashboard, Settings, and a click-trigger to open the Leaderboard.
-  - Colorful premium gradient Telegram connection warning banner.
-  - Wallet Leaderboard Popup Modal.
-- **Live Alert Feed Redesign**: Overhauled [live-alert-feed.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/components/live-alert-feed.tsx):
-  - Added inline `+ ADD` action button triggering the `addToWatchlist` Server Action to add whales to watchlists directly from the signals feed.
-  - Added clickable risk auditing rating indicators opening an **Automated Contract Auditing Modal** (safety donut gauge, LP locks status, mint keys, holder concentration, gas honeypot checklist).
-  - Added dual external links to DexScreener and Jupiter Swap in the Dex Terminal column.
-  - Expanded the feed to full-width (`lg:col-span-12`) at the bottom of the dashboard.
-- **Leaderboard Adaptability**: Updated [wallet-leaderboard.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/components/wallet-leaderboard.tsx) supporting an `isModal` mode. Strips card headers/borders in modal view, rendering a wider layout containing Solscan explorer shortcuts.
+- **Stripe Checkout & Billing Portal**: Added checkout session redirection ($9/month promotional pricing) and Stripe billing customer portal management endpoints inside `/settings`.
+- **Premium Status Synchronization**: Implemented `syncUserPremiumStatus` inside server loaders for `/dashboard` and `/settings` to sync client subscription details from InsForge's active payment views.
+- **Responsive left vertical navigation sidebar**: Replaced horizontal headers with a modern, split-view vertical sidebar [DashboardSidebarNav.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/components/layout/DashboardSidebarNav.tsx) and [site-shell.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/components/site-shell.tsx). Displays main routes, billing metrics, and collapses on mobile into a slide-out navigation drawer with a hamburger menu toggle.
+- **Segmented Settings Page Tabs**: Re-designed [settings-content.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/settings/settings-content.tsx) to feature horizontal tab controls (`Alert Parameters`, `Telegram Integration`, `Watchlist Manager`, `Billing & Account`) instead of dense text blocks.
+- **Professional Emojis Clean-up**: Stripped cheap emojis from settings, alerts, and buttons. Replaced dashboard indicators with clean Lucide icons and telegram bot prompt responses (`telegram.ts`, `run-bot.mjs`) with bracketed state markers (e.g. `[Success]`, `[Alert]`, `[Error]`).
+- **Local Bot Testing Utility**: Set up a long-polling bot script at `scratch/run-bot.mjs` for validating local messaging commands.
 
 ## Decisions made
-- **Leaderboard Popup**: Relocated the Wallet Leaderboard table from the primary dashboard row to an interactive modal triggered from the sidebar to prevent visual crowding.
-- **Full-Width Feed**: Expanded the live signals feed to 100% width on the lower grid row to provide readable space for token names, risk boxes, and swap size decimals.
-- **Automated Seeding**: Configured target wallets to auto-seed on the first dashboard query if the table is empty.
+
+- **Drawer State Isolation**: Consolidated mobile hamburger drawer toggles and overlay nodes inside `DashboardSidebarNav` client scopes to prevent converting the parent Server layouts into Client layouts.
+- **Loader Sync Pattern**: Evaluated and synchronized active users' Stripe configurations directly inside page-level Next.js route loading processes so membership changes apply immediately on reload.
 
 ## Problems solved
-- **RLS INSERT Policy Blockage (42501)**: Solved `new row violates row-level security policy for table "target_wallets"` by applying SQL migration `20260623070839_add-target-wallets-insert-policy.sql` introducing public `INSERT` policies.
-- **Double Headers Clutter**: Fixed double card borders and double headers when rendering the leaderboard component inside the modal by creating a configurable `isModal` rendering mode.
+
+- **Leaderboard Modal Stacking Bug**: Patched overlay clipping where right-side SVG metrics graphs lay on top of the leaderboard modal, by setting `z-50` relative layers directly on `DashboardSidebarNav`.
+- **PostHog Guard Compilations**: Resolved developer environment crashes when telemetry token parameters are left empty.
+- **Next.js Dev-Build Chunks Conflicts**: Cleared webpack race failures (manifest ENOENT errors) by rebuilding the `.next/` cache directory cleanly.
 
 ## Current state
-- Phases 1, 2, and 3 are fully completed.
-- Next.js clean production build passes successfully.
-- Webhook routes, database queries, and server actions run without errors.
+
+- Responsive split navigation sidebars, horizontal settings tabs, bot emoji cleanup, and Stripe integrations are fully complete.
+- Production build compilation successfully resolves with zero warnings/errors.
+- Telegram bot commands are fully sanitized of emojis.
 
 ## Next session starts with
-Proceeding to **Phase 4 — Personalization**:
-1. Implement the **Alert Filters Settings** component in `/settings` (saving `min_liquidity`, `min_volume`, and `max_risk_score` to the database, and updating the telegram dispatch worker to respect these values).
-2. Build the **Personal Watchlists Panel** in `/settings` allowing users to add custom Solana wallet addresses and custom labels, alongside lists of currently tracked custom targets.
+
+1. **Deploy Project**: Deploy the updated Next.js application frontend to Vercel/production endpoints.
+2. **Stripe CLI Webhook Verification**: Set up local Stripe CLI webhook routing or InsForge webhook schedules to automatically synchronize payments into the database schemas.
+
+## Open questions
+
+- None.

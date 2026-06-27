@@ -6,9 +6,9 @@ Update this file after every completed feature. Any AI agent reading this should
 
 ## Current Status
 
-**Phase:** Phase 2 — The Watcher & Messenger
-**Last completed:** 05 Telegram Bot (grammY setup, `/start` linking, broadcasting)
-**Next:** 06 Live Alert Feed
+**Phase:** Phase 4 — Personalization
+**Last completed:** 09 Personal Watchlists
+**Next:** 10 Stripe Integration (Phase 5)
 
 ---
 
@@ -27,13 +27,13 @@ Update this file after every completed feature. Any AI agent reading this should
 
 ### Phase 3 — The Signal (Dashboard)
 
-- `[ ]` 06 Live Alert Feed
-- `[ ]` 07 Wallet Leaderboard
+- `[x]` 06 Live Alert Feed
+- `[x]` 07 Wallet Leaderboard
 
 ### Phase 4 — Personalization
 
-- `[ ]` 08 Alert Filters
-- `[ ]` 09 Personal Watchlists
+- `[x]` 08 Alert Filters
+- `[x]` 09 Personal Watchlists
 
 ### Phase 5 — Monetization
 

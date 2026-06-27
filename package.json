@@ -9,11 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@insforge/sdk": "^1.2.2",
+    "@insforge/sdk": "^1.4.2",
     "convex": "^1.11.2",
     "grammy": "^1.44.0",
     "lucide-react": "^0.395.0",
     "next": "^15.5.7",
+    "posthog-js": "^1.393.4",
+    "posthog-node": "^5.38.5",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },

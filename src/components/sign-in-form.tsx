@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { OAuthProviderButtons } from "@/components/oauth-provider-buttons";
 import { signIn } from "@/lib/auth-actions";
+import posthog from "posthog-js";
 
 export function SignInForm({ providers }: { providers: string[] }) {
   const [email, setEmail] = useState("");
@@ -20,6 +21,8 @@ export function SignInForm({ providers }: { providers: string[] }) {
     const result = await signIn(email.trim(), password);
 
     if (result.success) {
+      posthog.identify(email.trim());
+      posthog.capture("user_signed_in", { method: "email" });
       window.location.href = "/protected";
       return;
     }

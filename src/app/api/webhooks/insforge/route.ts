@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getInsforgeServerClient } from "@/lib/insforge";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -87,6 +88,17 @@ export async function POST(req: NextRequest) {
       console.error("[webhooks/insforge] Error inserting default settings:", settingsInsertError);
       // We don't rollback the user, but we log the error
     }
+
+    const posthog = getPostHogClient();
+    posthog.identify({
+      distinctId: email,
+      properties: { email, user_id: insforgeId },
+    });
+    posthog.capture({
+      distinctId: email,
+      event: "user_synced",
+      properties: { email, user_id: insforgeId },
+    });
 
     return NextResponse.json({ success: true, message: "User synced successfully" });
   } catch (error) {

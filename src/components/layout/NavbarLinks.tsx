@@ -3,18 +3,30 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function NavbarLinks() {
+interface NavbarLinksProps {
+  isLanding?: boolean;
+}
+
+export function NavbarLinks({ isLanding = false }: NavbarLinksProps) {
   const pathname = usePathname();
 
-  const links = [
+  const landingLinks = [
+    { href: "/#features", label: "Features" },
+    { href: "/#pricing", label: "Pricing" },
+  ];
+
+  const dashboardLinks = [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/settings", label: "Settings" },
   ];
 
+  const links = isLanding ? landingLinks : dashboardLinks;
+
   return (
     <nav className="flex items-center gap-8">
       {links.map((link) => {
-        const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+        // Only mark active if exact match or subpath
+        const isActive = pathname === link.href;
         return (
           <Link
             key={link.href}

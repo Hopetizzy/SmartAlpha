@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { OAuthProviderButtons } from "@/components/oauth-provider-buttons";
 import { resendVerification, signUp, verifyEmail } from "@/lib/auth-actions";
+import posthog from "posthog-js";
 
 export function SignUpForm({ providers }: { providers: string[] }) {
   const [name, setName] = useState("");
@@ -36,6 +37,8 @@ export function SignUpForm({ providers }: { providers: string[] }) {
       return;
     }
 
+    posthog.identify(email.trim(), { name: name.trim() });
+    posthog.capture("user_signed_up", { method: "email" });
     window.location.href = "/protected";
   }
 
@@ -47,6 +50,8 @@ export function SignUpForm({ providers }: { providers: string[] }) {
     const result = await verifyEmail(email.trim(), otp.trim());
 
     if (result.success) {
+      posthog.identify(email.trim());
+      posthog.capture("user_signed_up", { method: "email", email_verified: true });
       window.location.href = "/protected";
       return;
     }

@@ -10,7 +10,7 @@ export default async function Home() {
   const viewer = await getCurrentViewer();
 
   return (
-    <SiteShell>
+    <SiteShell isLanding={true}>
       <div className="flex flex-col gap-24 py-8">
         {/* Hero Section */}
         <section className="relative isolate flex flex-col items-center text-center max-w-4xl mx-auto gap-8 w-full">
@@ -85,7 +85,7 @@ export default async function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <section id="features" className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="bg-surface border border-border rounded-xl p-6 shadow-sm hover:border-text-muted transition-colors flex flex-col gap-4">
             <div className="w-12 h-12 rounded-lg bg-info-lightest border border-info-light flex items-center justify-center text-info">
               <Bell className="w-6 h-6" />
@@ -175,11 +175,14 @@ export default async function Home() {
               <div className="flex flex-col gap-6">
                 <div>
                   <h3 className="text-xl font-bold text-text-primary">Alpha Premium</h3>
-                  <p className="text-sm text-text-secondary mt-1">For serious data-driven traders</p>
+                  <p className="text-xs text-text-secondary mt-1.5 leading-relaxed font-medium">
+                    For serious data-driven traders. First 10 users lock in this promo rate for an additional 2 months after standard pricing increases to $29/mo.
+                  </p>
                 </div>
-                <div className="flex items-baseline">
-                  <span className="text-4xl font-extrabold text-text-primary">$29</span>
-                  <span className="text-text-secondary ml-1 text-sm font-medium">/ month</span>
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-4xl font-extrabold text-text-primary">$9</span>
+                  <span className="text-text-secondary text-sm font-medium">/ month</span>
+                  <span className="text-lg text-text-muted line-through font-medium ml-1.5">$29/mo</span>
                 </div>
                 <ul className="flex flex-col gap-3.5 text-sm text-text-secondary font-medium">
                   <li className="flex items-center gap-2.5">
