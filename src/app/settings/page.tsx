@@ -5,7 +5,7 @@ import { getAccessToken } from "@/lib/auth-cookies";
 import { createInsforgeServerClient } from "@/lib/insforge";
 import { SiteShell } from "@/components/site-shell";
 import { SettingsContent } from "./settings-content";
-import { fetchSettings, fetchWatchlist } from "./actions";
+import { fetchSettings, fetchWatchlist, fetchTransactions } from "./actions";
 
 export const metadata = {
   title: "Settings | SmartAlpha - On-Chain Whale Alerts",
@@ -38,10 +38,14 @@ export default async function SettingsPage() {
 
   const isPremium = dbUser?.is_premium ?? false;
   const telegramChatId = dbUser?.telegram_chat_id || "";
+  const stripeCustomerId = dbUser?.stripe_customer_id || null;
+  const createdAt = dbUser?.created_at || new Date().toISOString();
+  const userEmail = dbUser?.email || viewer.email || "";
 
-  // 2. Fetch current settings and watchlist
+  // 2. Fetch current settings, watchlist, and transactions
   const settingsRes = await fetchSettings();
   const watchlistRes = await fetchWatchlist();
+  const transactionsRes = await fetchTransactions();
 
   const userDisplayName = viewer.name || viewer.email?.split("@")[0] || "Trader";
 
@@ -64,6 +68,11 @@ export default async function SettingsPage() {
           isPremium={isPremium}
           telegramChatId={telegramChatId}
           userDisplayName={userDisplayName}
+          userEmail={userEmail}
+          userId={viewer.id}
+          createdAt={createdAt}
+          stripeCustomerId={stripeCustomerId}
+          initialTransactions={transactionsRes.data || []}
         />
         
       </div>

@@ -23,7 +23,10 @@ export function createInsforgeServerClient(options?: { accessToken?: string }) {
     baseUrl,
     anonKey,
     isServerMode: true,
-    ...(options?.accessToken ? { edgeFunctionToken: options.accessToken } : {}),
+    ...(options?.accessToken ? { 
+      accessToken: options.accessToken, 
+      edgeFunctionToken: options.accessToken 
+    } : {}),
   });
 }
 

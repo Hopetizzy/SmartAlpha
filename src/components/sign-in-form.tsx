@@ -23,7 +23,7 @@ export function SignInForm({ providers }: { providers: string[] }) {
     if (result.success) {
       posthog.identify(email.trim());
       posthog.capture("user_signed_in", { method: "email" });
-      window.location.href = "/protected";
+      window.location.href = "/dashboard";
       return;
     }
 

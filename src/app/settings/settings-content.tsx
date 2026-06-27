@@ -24,7 +24,8 @@ import {
   AlertSettings,
   WatchlistItem,
   createStripeCheckoutSession,
-  createStripeCustomerPortalSession
+  createStripeCustomerPortalSession,
+  TransactionRecord
 } from "./actions";
 import posthog from "posthog-js";
 
@@ -34,6 +35,11 @@ interface SettingsContentProps {
   isPremium: boolean;
   telegramChatId: string;
   userDisplayName: string;
+  userEmail: string;
+  userId: string;
+  createdAt: string;
+  stripeCustomerId: string | null;
+  initialTransactions: TransactionRecord[];
 }
 
 export function SettingsContent({
@@ -42,6 +48,11 @@ export function SettingsContent({
   isPremium,
   telegramChatId,
   userDisplayName,
+  userEmail,
+  userId,
+  createdAt,
+  stripeCustomerId,
+  initialTransactions,
 }: SettingsContentProps) {
   // 1. Settings state
   const [minLiquidity, setMinLiquidity] = useState(initialSettings.min_liquidity);
@@ -300,9 +311,9 @@ export function SettingsContent({
                   </label>
                   <span className={`text-xs font-black px-2 py-0.5 rounded-full ${
                     maxRiskScore <= 30 
-                      ? "bg-success-lightest text-success border border-success-light" 
+                      ? "bg-success-lightest text-success-foreground border border-success-light" 
                       : maxRiskScore <= 70 
-                      ? "bg-warning-light/20 text-warning-foreground border border-warning-light" 
+                      ? "bg-warning-lightest text-warning-foreground border border-warning-light" 
                       : "bg-error-light text-error border border-error-light"
                   }`}>
                     {maxRiskScore} / 100
@@ -571,93 +582,222 @@ export function SettingsContent({
 
         {/* Tab 4: Billing & Account */}
         {activeTab === "billing" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            {/* User Details card */}
-            <div className="bg-surface border border-border/80 rounded-xl p-6 shadow-sm flex flex-col gap-5 hover:shadow-md transition-all duration-300">
-              <div className="border-b border-border/50 pb-4">
-                <h4 className="text-base font-bold text-text-primary">Your Profile</h4>
-                <p className="text-xs text-text-muted mt-0.5">Details of your logged-in SmartAlpha credentials.</p>
+          <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              {/* User Details card */}
+              <div className="bg-surface border border-border/80 rounded-xl p-6 shadow-sm flex flex-col gap-5 hover:shadow-md transition-all duration-300">
+                <div className="border-b border-border/50 pb-4">
+                  <h4 className="text-base font-bold text-text-primary">Your Profile</h4>
+                  <p className="text-xs text-text-muted mt-0.5">Details of your logged-in SmartAlpha credentials.</p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-light to-primary flex items-center justify-center text-primary-foreground text-lg font-extrabold shadow-sm shrink-0 border border-primary-light">
+                    {userDisplayName.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-base font-black text-text-primary tracking-tight">{userDisplayName}</h3>
+                    <span className={`w-fit inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-wider ${
+                      isPremium 
+                        ? "bg-success-lightest text-success-foreground border border-success-light" 
+                        : "bg-surface-secondary text-text-secondary border border-border"
+                    }`}>
+                      {isPremium ? (
+                        <>
+                          <Sparkles className="w-3 h-3 text-success shrink-0" />
+                          Premium Subscriber
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-3 h-3 text-text-secondary shrink-0" />
+                          Free Plan
+                        </>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 mt-2 border-t border-border/40 pt-4 text-xs font-semibold">
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-text-secondary">Email Address</span>
+                    <span className="font-mono text-text-primary">{userEmail}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-text-secondary">Account ID</span>
+                    <span className="font-mono text-text-muted text-[10px] select-all">{userId}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-text-secondary">Member Since</span>
+                    <span className="text-text-primary">
+                      {new Date(createdAt).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  {stripeCustomerId && (
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-text-secondary">Customer Reference</span>
+                      <span className="font-mono text-text-muted text-[10px] select-all">{stripeCustomerId}</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-light to-primary flex items-center justify-center text-primary-foreground text-lg font-extrabold shadow-sm shrink-0 border border-primary-light">
-                  {userDisplayName.slice(0, 2).toUpperCase()}
+              {/* Plan / Upgrades Card */}
+              <div className="bg-surface border border-border/80 rounded-xl p-6 shadow-sm flex flex-col gap-5 hover:shadow-md transition-all duration-300">
+                <div className="border-b border-border/50 pb-4">
+                  <h4 className="text-base font-bold text-text-primary">Subscription Plan</h4>
+                  <p className="text-xs text-text-muted mt-0.5">Unlock alerts and watchlist features on your account.</p>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-base font-black text-text-primary tracking-tight">{userDisplayName}</h3>
-                  <span className={`w-fit inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-wider ${
-                    isPremium 
-                      ? "bg-success-lightest text-success-foreground border border-success-light" 
-                      : "bg-surface-secondary text-text-secondary border border-border"
-                  }`}>
-                    {isPremium ? (
-                      <>
-                        <Sparkles className="w-3 h-3 text-success shrink-0" />
-                        Premium Subscriber
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="w-3 h-3 text-text-secondary shrink-0" />
-                        Free Plan
-                      </>
-                    )}
-                  </span>
-                </div>
+
+                {isPremium ? (
+                  <div className="flex flex-col gap-4">
+                    <div className="p-4 border border-success-light bg-success-lightest/45 rounded-xl flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-success-foreground">Alpha Premium Plan Active</span>
+                        <span className="text-xs text-text-secondary mt-1 font-medium leading-relaxed">
+                          Full access to Telegram alert feeds, customized slider risk criteria, and personal watchlists is unlocked.
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={handleManageBilling}
+                      disabled={isBillingLoading}
+                      className="w-full bg-surface border border-border hover:bg-surface-secondary text-text-primary font-bold text-xs py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {isBillingLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      Manage Billing & Invoices
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <div className="p-4 border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-indigo-500/5 rounded-xl flex flex-col gap-2.5">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-3xl font-black text-text-primary tracking-tight">$9</span>
+                        <span className="text-xs text-text-muted font-medium">/ month</span>
+                        <span className="text-sm text-text-muted line-through ml-1.5 font-medium">$29/mo</span>
+                        <span className="text-[9px] font-extrabold bg-primary-lightest text-primary px-2 py-0.5 rounded border border-primary-light uppercase tracking-wider ml-auto">
+                          Early Promo
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-text-secondary leading-relaxed font-medium">
+                        Receive real-time notifications for wallet swaps, custom filters on liquidity/swaps, and limitless watchlists.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={handleSubscribe}
+                      disabled={isBillingLoading}
+                      className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-xs py-2.5 rounded-lg shadow-[0_4px_12px_rgba(124,58,237,0.2)] hover:shadow-[0_6px_16px_rgba(124,58,237,0.3)] transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {isBillingLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      Upgrade to Premium
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Plan / Upgrades Card */}
+            {/* Billing History Card */}
             <div className="bg-surface border border-border/80 rounded-xl p-6 shadow-sm flex flex-col gap-5 hover:shadow-md transition-all duration-300">
               <div className="border-b border-border/50 pb-4">
-                <h4 className="text-base font-bold text-text-primary">Subscription Plan</h4>
-                <p className="text-xs text-text-muted mt-0.5">Unlock alerts and watchlist features on your account.</p>
+                <h4 className="text-base font-bold text-text-primary">Billing & Invoice History</h4>
+                <p className="text-xs text-text-muted mt-0.5">View and download your historical premium subscription statements.</p>
               </div>
 
-              {isPremium ? (
-                <div className="flex flex-col gap-4">
-                  <div className="p-4 border border-success-light bg-success-lightest/45 rounded-xl flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-success-foreground">Alpha Premium Plan Active</span>
-                      <span className="text-xs text-text-secondary mt-1 font-medium leading-relaxed">
-                        Full access to Telegram alert feeds, customized slider risk criteria, and personal watchlists is unlocked.
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={handleManageBilling}
-                    disabled={isBillingLoading}
-                    className="w-full bg-surface border border-border hover:bg-surface-secondary text-text-primary font-bold text-xs py-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5"
-                  >
-                    {isBillingLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    Manage Billing & Invoices
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  <div className="p-4 border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-indigo-500/5 rounded-xl flex flex-col gap-2.5">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-black text-text-primary tracking-tight">$9</span>
-                      <span className="text-xs text-text-muted font-medium">/ month</span>
-                      <span className="text-sm text-text-muted line-through ml-1.5 font-medium">$29/mo</span>
-                      <span className="text-[9px] font-extrabold bg-primary-lightest text-primary px-2 py-0.5 rounded border border-primary-light uppercase tracking-wider ml-auto">
-                        Early Promo
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-text-secondary leading-relaxed font-medium">
-                      Receive real-time notifications for wallet swaps, custom filters on liquidity/swaps, and limitless watchlists.
+              {initialTransactions.length === 0 ? (
+                <div className="p-8 border border-dashed border-border rounded-xl text-center flex flex-col items-center justify-center gap-2 bg-surface-secondary/10">
+                  <CreditCard className="w-5 h-5 text-text-muted animate-pulse" />
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">No transactions found</p>
+                    <p className="text-[10px] text-text-muted max-w-sm mt-0.5 leading-normal">
+                      Once you upgrade or complete subscription payments, invoice records will populate here.
                     </p>
                   </div>
+                </div>
+              ) : (
+                <div className="border border-border/85 rounded-xl overflow-hidden shadow-sm">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-border bg-surface-secondary text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+                        <th className="px-5 py-3">Description</th>
+                        <th className="px-5 py-3">Date</th>
+                        <th className="px-5 py-3">Amount</th>
+                        <th className="px-5 py-3">Status</th>
+                        <th className="px-5 py-3 text-right">Invoices</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/40 text-xs font-semibold text-text-primary">
+                      {initialTransactions.map((tx) => {
+                        const dateStr = new Date(tx.created_at).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        });
+                        const amountFormatted = new Intl.NumberFormat(undefined, {
+                          style: "currency",
+                          currency: tx.currency || "USD",
+                        }).format(tx.amount / 100);
 
-                  <button
-                    onClick={handleSubscribe}
-                    disabled={isBillingLoading}
-                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-xs py-2.5 rounded-lg shadow-[0_4px_12px_rgba(124,58,237,0.2)] hover:shadow-[0_6px_16px_rgba(124,58,237,0.3)] transition-all flex items-center justify-center gap-1.5"
-                  >
-                    {isBillingLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    Upgrade to Premium
-                  </button>
+                        const invoicePdf = tx.raw?.invoice_pdf;
+                        const hostedInvoiceUrl = tx.raw?.hosted_invoice_url;
+                        const invoiceNumber = tx.raw?.number || `TX-${tx.id.slice(0, 8).toUpperCase()}`;
+
+                        return (
+                          <tr key={tx.id} className="hover:bg-surface-secondary/50 transition-colors">
+                            <td className="px-5 py-3.5 flex flex-col gap-0.5">
+                              <span className="text-text-primary font-bold">
+                                {tx.description || "Alpha Premium Subscription"}
+                              </span>
+                              <span className="text-[10px] text-text-muted font-mono">{invoiceNumber}</span>
+                            </td>
+                            <td className="px-5 py-3.5 text-text-secondary">{dateStr}</td>
+                            <td className="px-5 py-3.5 font-bold text-text-primary">{amountFormatted}</td>
+                            <td className="px-5 py-3.5">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider capitalize ${
+                                tx.status === "succeeded" || tx.status === "paid"
+                                  ? "bg-success-lightest text-success-foreground border border-success-light"
+                                  : tx.status === "failed"
+                                  ? "bg-error-light text-error border border-error-light"
+                                  : "bg-surface-secondary text-text-secondary border border-border"
+                              }`}>
+                                {tx.status}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-right">
+                              <div className="inline-flex items-center gap-2 justify-end w-full">
+                                {hostedInvoiceUrl && (
+                                  <a
+                                    href={hostedInvoiceUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                                  >
+                                    View Online
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {invoicePdf && (
+                                  <a
+                                    href={invoicePdf}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-surface border border-border hover:bg-surface-secondary text-text-primary font-bold text-[10px] px-2.5 py-1 rounded shadow-sm transition-colors"
+                                  >
+                                    PDF
+                                  </a>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

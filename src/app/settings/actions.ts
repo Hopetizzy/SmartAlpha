@@ -7,6 +7,9 @@ import { createInsforgeServerClient } from "@/lib/insforge";
 import { getCurrentUserDetails } from "@/lib/auth-state";
 
 async function getAuthenticatedClient() {
+  const user = await getCurrentUserDetails();
+  if (!user) return createInsforgeServerClient();
+
   const accessToken = await getAccessToken();
   return createInsforgeServerClient({ accessToken: accessToken ?? undefined });
 }
@@ -394,4 +397,39 @@ export async function createStripeCustomerPortalSession(): Promise<{ url?: strin
     return { error: err.message || "Unknown error" };
   }
 }
+
+export type TransactionRecord = {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  description: string | null;
+  raw: any;
+  created_at: string;
+};
+
+export async function fetchTransactions(): Promise<{ data: TransactionRecord[] | null; error?: string }> {
+  try {
+    const user = await getCurrentUserDetails();
+    if (!user) return { data: null, error: "Unauthorized" };
+
+    const insforge = await getAuthenticatedClient();
+
+    const { data, error } = await insforge.database
+      .from("stripe_transactions_view")
+      .select("id, amount, currency, status, description, raw, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[settings/actions] Error fetching transactions:", error);
+      return { data: null, error: error.message };
+    }
+
+    return { data: data || [] };
+  } catch (err: any) {
+    console.error("[settings/actions] fetchTransactions failure:", err);
+    return { data: null, error: err.message || "Unknown error" };
+  }
+}
+
 

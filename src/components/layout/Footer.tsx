@@ -15,7 +15,7 @@ export function Footer() {
           </div>
         </div>
         <div className="flex items-center gap-6">
-          <ThemeSwitcher />
+          <ThemeSwitcher align="top" />
         </div>
       </div>
     </footer>

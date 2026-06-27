@@ -39,7 +39,7 @@ export function SignUpForm({ providers }: { providers: string[] }) {
 
     posthog.identify(email.trim(), { name: name.trim() });
     posthog.capture("user_signed_up", { method: "email" });
-    window.location.href = "/protected";
+    window.location.href = "/dashboard";
   }
 
   async function handleVerify(event: React.FormEvent) {
@@ -52,7 +52,7 @@ export function SignUpForm({ providers }: { providers: string[] }) {
     if (result.success) {
       posthog.identify(email.trim());
       posthog.capture("user_signed_up", { method: "email", email_verified: true });
-      window.location.href = "/protected";
+      window.location.href = "/dashboard";
       return;
     }
 

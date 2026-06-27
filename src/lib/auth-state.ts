@@ -2,7 +2,7 @@ import "server-only";
 
 import type { UserSchema } from "@insforge/sdk";
 
-import { getAccessToken, getRefreshToken } from "@/lib/auth-cookies";
+import { getAccessToken, getRefreshToken, setAuthCookies } from "@/lib/auth-cookies";
 import { createInsforgeServerClient } from "@/lib/insforge";
 
 type AuthViewer = {
@@ -41,8 +41,14 @@ async function refreshAuthenticatedUser(refreshToken: string) {
   const insforge = createInsforgeServerClient();
   const { data, error } = await insforge.auth.refreshSession({ refreshToken });
 
-  if (error || !data?.user) {
+  if (error || !data?.user || !data?.accessToken || !data?.refreshToken) {
     return null;
+  }
+
+  try {
+    await setAuthCookies(data.accessToken, data.refreshToken);
+  } catch (cookieError) {
+    console.error("[auth-state] Failed to write cookies during refresh:", cookieError);
   }
 
   return data.user;

@@ -31,6 +31,8 @@ export default {
         'info-lightest': 'var(--color-info-lightest)',
         warning: 'var(--color-warning)',
         'warning-foreground': 'var(--color-warning-foreground)',
+        'warning-light': 'var(--color-warning-light)',
+        'warning-lightest': 'var(--color-warning-lightest)',
         error: 'var(--color-error)',
         'error-light': 'var(--color-error-light)',
         'error-foreground': 'var(--color-error-foreground)',

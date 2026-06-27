@@ -40,7 +40,9 @@
 
     /* Warning — Orange (Medium Risk) */
     --color-warning: #ff8904;
-    --color-warning-foreground: #ffffff;
+    --color-warning-foreground: #a16207;
+    --color-warning-light: #fde68a;
+    --color-warning-lightest: #fef3c7;
 
     /* Error — Red (Loss / High Risk) */
     --color-error: #ef4444;
@@ -53,6 +55,51 @@
     --radius-lg: 12px;
     --radius-xl: 16px;
     --radius-full: 9999px;
+  }
+
+  [data-theme="dark"] {
+    /* Page and surface backgrounds */
+    --color-background: #0b0f19;
+    --color-surface: #111827;
+    --color-surface-secondary: #1f2937;
+    --color-surface-tertiary: #374151;
+
+    /* Borders */
+    --color-border: #1f2937;
+    --color-border-light: #374151;
+
+    /* Text */
+    --color-text-primary: #f9fafb;
+    --color-text-secondary: #9ca3af;
+    --color-text-muted: #6b7280;
+    --color-text-dark: #d1d5db;
+
+    /* Primary Accent — Slate/Dark */
+    --color-primary: #f9fafb;
+    --color-primary-foreground: #111827;
+
+    /* Success — Green (Profit / Low Risk) */
+    --color-success: #10b981;
+    --color-success-dark: #059669;
+    --color-success-light: #064e3b;
+    --color-success-lightest: #022c22;
+    --color-success-foreground: #34d399;
+
+    /* Info — Blue */
+    --color-info: #3b82f6;
+    --color-info-light: #1e3a8a;
+    --color-info-lightest: #172554;
+
+    /* Warning — Orange (Medium Risk) */
+    --color-warning: #f59e0b;
+    --color-warning-foreground: #fbbf24;
+    --color-warning-light: #78350f;
+    --color-warning-lightest: #451a03;
+
+    /* Error — Red (Loss / High Risk) */
+    --color-error: #ef4444;
+    --color-error-light: #7f1d1d;
+    --color-error-foreground: #fca5a5;
   }
 
   body {

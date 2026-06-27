@@ -6,6 +6,9 @@ import { createInsforgeServerClient } from "@/lib/insforge";
 import { getCurrentUserDetails } from "@/lib/auth-state";
 
 async function getAuthenticatedClient() {
+  const user = await getCurrentUserDetails();
+  if (!user) return createInsforgeServerClient();
+
   const accessToken = await getAccessToken();
   return createInsforgeServerClient({ accessToken: accessToken ?? undefined });
 }

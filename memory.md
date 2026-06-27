@@ -1,37 +1,30 @@
-# Memory — Stripe Monetization, Responsive Vertical Sidebar & Settings Refactoring
+# Memory — Settings Page Fixes & User Auth Session Persistence
 
-Last updated: 2026-06-27T06:01:00+01:00
+Last updated: 2026-06-27T15:22:00Z
 
 ## What was built
 
-- **Stripe Checkout & Billing Portal**: Added checkout session redirection ($9/month promotional pricing) and Stripe billing customer portal management endpoints inside `/settings`.
-- **Premium Status Synchronization**: Implemented `syncUserPremiumStatus` inside server loaders for `/dashboard` and `/settings` to sync client subscription details from InsForge's active payment views.
-- **Responsive left vertical navigation sidebar**: Replaced horizontal headers with a modern, split-view vertical sidebar [DashboardSidebarNav.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/components/layout/DashboardSidebarNav.tsx) and [site-shell.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/components/site-shell.tsx). Displays main routes, billing metrics, and collapses on mobile into a slide-out navigation drawer with a hamburger menu toggle.
-- **Segmented Settings Page Tabs**: Re-designed [settings-content.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/settings/settings-content.tsx) to feature horizontal tab controls (`Alert Parameters`, `Telegram Integration`, `Watchlist Manager`, `Billing & Account`) instead of dense text blocks.
-- **Professional Emojis Clean-up**: Stripped cheap emojis from settings, alerts, and buttons. Replaced dashboard indicators with clean Lucide icons and telegram bot prompt responses (`telegram.ts`, `run-bot.mjs`) with bracketed state markers (e.g. `[Success]`, `[Alert]`, `[Error]`).
-- **Local Bot Testing Utility**: Set up a long-polling bot script at `scratch/run-bot.mjs` for validating local messaging commands.
+- **Max Risk Score Warning Badge Color Coordination**: Enabled support for custom warning colors inside [globals.css](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/globals.css) (`--color-warning-light`, `--color-warning-lightest`) and [tailwind.config.ts](file:///c:/Users/HP/Desktop/SmartAlpha/tailwind.config.ts), mapping the risk badge to display legibly in both light and dark modes.
+- **Detailed Profile Credentials card**: Extended the profile tab inside [settings-content.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/settings/settings-content.tsx) and page loader [page.tsx](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/settings/page.tsx) to query and render Email, User ID, Member Since date, and Stripe Customer Reference.
+- **Stripe Billing History & Invoice Downloads Table**: Created the Postgres view [20260627134200_create-transactions-view.sql](file:///c:/Users/HP/Desktop/SmartAlpha/migrations/20260627134200_create-transactions-view.sql) to securely fetch transactions mapping the user's `auth.uid()`, exposed a server action in [actions.ts](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/settings/actions.ts), and rendered a table displaying transaction dates, amounts, status, online invoice link, and PDF invoice downloads.
 
 ## Decisions made
 
-- **Drawer State Isolation**: Consolidated mobile hamburger drawer toggles and overlay nodes inside `DashboardSidebarNav` client scopes to prevent converting the parent Server layouts into Client layouts.
-- **Loader Sync Pattern**: Evaluated and synchronized active users' Stripe configurations directly inside page-level Next.js route loading processes so membership changes apply immediately on reload.
+- **User Security Filtering on Database View**: Created a direct `CREATE OR REPLACE VIEW public.stripe_transactions_view` that queries `payments.transactions` and enforces `subject_id = auth.uid()::text` to securely expose transaction logs to authenticated client requests without bypassing RLS or leaking foreign user billing records.
 
 ## Problems solved
 
-- **Leaderboard Modal Stacking Bug**: Patched overlay clipping where right-side SVG metrics graphs lay on top of the leaderboard modal, by setting `z-50` relative layers directly on `DashboardSidebarNav`.
-- **PostHog Guard Compilations**: Resolved developer environment crashes when telemetry token parameters are left empty.
-- **Next.js Dev-Build Chunks Conflicts**: Cleared webpack race failures (manifest ENOENT errors) by rebuilding the `.next/` cache directory cleanly.
+- **Stripe Customer Portal 401 Authorization Error**: Solved the `Customer portal sessions require an authenticated user` error by fixing a token propagation gap in [insforge.ts](file:///c:/Users/HP/Desktop/SmartAlpha/src/lib/insforge.ts) where `accessToken` was omitted during server client initialization.
+- **User Token Expiry & Request Cookies Invalidation**: Resolved the bug where refreshed user tokens were not saved back to cookies (causing server action authorization to decay when access tokens expired). Updated `refreshAuthenticatedUser` in [auth-state.ts](file:///c:/Users/HP/Desktop/SmartAlpha/src/lib/auth-state.ts) to write token refreshes to cookies using `setAuthCookies`, and updated `getAuthenticatedClient` inside actions files ([settings](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/settings/actions.ts), [dashboard](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/dashboard/actions.ts), [protected](file:///c:/Users/HP/Desktop/SmartAlpha/src/app/protected/actions.ts)) to trigger session validations before executing user-scoped tasks.
 
 ## Current state
 
-- Responsive split navigation sidebars, horizontal settings tabs, bot emoji cleanup, and Stripe integrations are fully complete.
-- Production build compilation successfully resolves with zero warnings/errors.
-- Telegram bot commands are fully sanitized of emojis.
+- All features are fully implemented, verified, and complete. 
+- The Next.js project builds successfully without typescript or compilation errors (`npm run build` succeeds).
 
 ## Next session starts with
 
-1. **Deploy Project**: Deploy the updated Next.js application frontend to Vercel/production endpoints.
-2. **Stripe CLI Webhook Verification**: Set up local Stripe CLI webhook routing or InsForge webhook schedules to automatically synchronize payments into the database schemas.
+- General verification of application analytics (PostHog/telemetry events tracking check) or additional dashboard features as requested.
 
 ## Open questions
 

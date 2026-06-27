@@ -2,7 +2,7 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const path = require('path');
 
-const migrationFile = path.join(__dirname, '../migrations/20260627000537_stripe-sync-triggers.sql');
+const migrationFile = path.join(__dirname, '../migrations/20260627113540_stripe-sync-triggers.sql');
 let sql = fs.readFileSync(migrationFile, 'utf8');
 
 // Strip SQL comments starting with -- to prevent any command line option confusion

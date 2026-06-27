@@ -83,7 +83,7 @@ function LaptopIcon() {
   );
 }
 
-export function ThemeSwitcher() {
+export function ThemeSwitcher({ align = "bottom" }: { align?: "top" | "bottom" }) {
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>("system");
   const [open, setOpen] = useState(false);
@@ -153,7 +153,7 @@ export function ThemeSwitcher() {
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--muted-foreground)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-text-secondary transition hover:bg-surface-secondary hover:text-text-primary"
       >
         {theme === "light" ? (
           <SunIcon />
@@ -165,14 +165,14 @@ export function ThemeSwitcher() {
       </button>
 
       {open ? (
-        <div className="absolute bottom-11 right-0 z-20 min-w-36 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1 shadow-[0_16px_40px_rgba(0,0,0,0.14)]">
+        <div className={`absolute ${align === "top" ? "bottom-11" : "top-full mt-2"} right-0 z-20 min-w-36 rounded-xl border border-border bg-surface p-1 shadow-[0_16px_40px_rgba(0,0,0,0.14)]`}>
           <button
             type="button"
             onClick={() => handleThemeChange("light")}
             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
               theme === "light"
-                ? "bg-[var(--surface-muted)] text-[var(--foreground)]"
-                : "text-[var(--muted-foreground)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+                ? "bg-surface-secondary text-text-primary font-semibold"
+                : "text-text-secondary hover:bg-surface-secondary hover:text-text-primary font-medium"
             }`}
           >
             <SunIcon />
@@ -183,8 +183,8 @@ export function ThemeSwitcher() {
             onClick={() => handleThemeChange("dark")}
             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
               theme === "dark"
-                ? "bg-[var(--surface-muted)] text-[var(--foreground)]"
-                : "text-[var(--muted-foreground)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+                ? "bg-surface-secondary text-text-primary font-semibold"
+                : "text-text-secondary hover:bg-surface-secondary hover:text-text-primary font-medium"
             }`}
           >
             <MoonIcon />
@@ -195,8 +195,8 @@ export function ThemeSwitcher() {
             onClick={() => handleThemeChange("system")}
             className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
               theme === "system"
-                ? "bg-[var(--surface-muted)] text-[var(--foreground)]"
-                : "text-[var(--muted-foreground)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+                ? "bg-surface-secondary text-text-primary font-semibold"
+                : "text-text-secondary hover:bg-surface-secondary hover:text-text-primary font-medium"
             }`}
           >
             <LaptopIcon />

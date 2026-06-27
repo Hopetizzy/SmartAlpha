@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getCurrentUserDetails } from "@/lib/auth-state";
 import { getAccessToken } from "@/lib/auth-cookies";
 import { createInsforgeServerClient } from "@/lib/insforge";
 
 async function getAuthenticatedClient() {
+  const user = await getCurrentUserDetails();
+  if (!user) return createInsforgeServerClient();
+
   const accessToken = await getAccessToken();
   return createInsforgeServerClient({ accessToken: accessToken ?? undefined });
 }
